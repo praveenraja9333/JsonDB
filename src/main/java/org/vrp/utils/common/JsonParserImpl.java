@@ -113,11 +113,11 @@ public class JsonParserImpl {
             JsonToken token = reader.peek();
             switch (token) {
                 case BEGIN_ARRAY:
-                    root = name.equals("") ? root + ".[" + (counter++) + "]" : name + ".[" + (counter++) + "]";
+                    root = name.equals("") ? root + "[" + (counter++) + "]" : name + "[" + (counter++) + "]";
                     handleArray();
                     break;
                 case BEGIN_OBJECT:
-                    root = name.equals("") ? root + ".[" + (counter++) + "]" : name + ".[" + (counter++) + "]";
+                    root = name.equals("") ? root + "[" + (counter++) + "]" : name + "[" + (counter++) + "]";
                     parse();
                     break;
                 case NAME:
@@ -126,13 +126,13 @@ public class JsonParserImpl {
                     break;
                 case STRING:
                     String value = reader.nextString();
-                    addKeystore(root + ".[" + (counter++) + "]");
-                    temp.put(root + ".[" + (counter++) + "]", value);
+                    addKeystore(root + "[" + (counter) + "]");
+                    temp.put(root + "[" + (counter++) + "]", value);
                     break;
                 case NUMBER:
                     value = String.valueOf(reader.nextLong());
-                    addKeystore(root + ".[" + (counter++) + "]");
-                    temp.put(root + "[" + (counter + 1) + "]", value);
+                    addKeystore(root + "[" + (counter) + "]");
+                    temp.put(root + "[" + (counter++) + "]", value);
                     break;
                 case END_ARRAY:
                     reader.endArray();
@@ -191,28 +191,6 @@ public class JsonParserImpl {
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
         LinkedHashMap<Character, JsonKeys> l = jsonParser.keydatastore;
-        //JsonKeys j=l.get('A');
-        ArrayList<String> returnval = new ArrayList<>();
-        for (Character key : l.keySet()) {
-            returnval.addAll(l.get(key).get("\\*siteId"));
-        }
-        Pattern pattern = Pattern.compile(".*\\[([0-9]{1,100})+\\].*");
-        /*
-        TreeSet<String> treeSet=new TreeSet<>();
-        returnval.stream().sorted((i, j) -> {
-            Matcher matcher= pattern.matcher(i.substring(0,i.indexOf(']')+1));
-            Matcher matcher1=pattern.matcher(j.substring(0,j.indexOf(']')+1));
-            int a=1;
-            int b=1;
-            if(matcher1.matches()&&matcher.matches()) {
-                a = Integer.parseInt(matcher.group(1));
-                b = Integer.parseInt(matcher1.group(1));
-            }
-            return a-b;
-        }).forEach(i->{System.out.println(i);treeSet.add(i);});*/
-        for (String key : returnval) {
-            System.out.println("Phone number found are " + jsonParser.temp.get(key));
-        }
-        System.out.println("Stop");
+       // JMarshall jMarshall=new JMarshall();
     }
 }
