@@ -4,6 +4,7 @@ import org.vrp.utils.Model1;
 import org.vrp.utils.exceptions.FieldandKeyMatchException;
 import org.vrp.utils.exceptions.ObjectNotSupportedException;
 import org.vrp.utils.meta.Ignorable;
+import org.vrp.utils.meta.RjsonArray;
 import org.vrp.utils.meta.RjsonObject;
 
 import java.io.File;
@@ -12,16 +13,16 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class JMarshall<T> {
-    private final String ESCAPE="\\*";
-    T _obj;
-    private JsonParserImpl jsonParser;
-    private Class<T> clazz;
+    private final String ESCAPE = "\\*";
     private LinkedHashMap<String, List<String>> fieldvaluemapping = new LinkedHashMap<>();
     private LinkedHashMap<String, List<String>> fieldKeymapping = new LinkedHashMap<>();
+    private Map<String,List<String>> queryresultcache=new LinkedHashMap<>();
     private Map<String, String> keymap = new LinkedHashMap<>();
+    private JsonParserImpl jsonParser;
+    private String rootkey = "";
+    private Class<T> clazz;
     private Field[] fields;
-
-    private String rootkey="";
+    private T _obj;
 
     enum DA_TYPES {
         STRING(java.lang.String.class),
@@ -35,16 +36,19 @@ public class JMarshall<T> {
         DA_TYPES(Class clazzname) {
             this.clazzname = clazzname;
         }
+
         @Override
         public String toString() {
             return clazzname.getName();
         }
-        public Class<?> getClazz(){
+
+        public Class<?> getClazz() {
             return clazzname;
         }
-        public static DA_TYPES getFromClazz(Class clazzname){
-            for(DA_TYPES da_types:DA_TYPES.values()){
-                if(da_types.getClazz()==clazzname){
+
+        public static DA_TYPES getFromClazz(Class clazzname) {
+            for (DA_TYPES da_types : DA_TYPES.values()) {
+                if (da_types.getClazz() == clazzname) {
                     return da_types;
                 }
             }
@@ -105,12 +109,13 @@ public class JMarshall<T> {
              Class<?> fieldclazz = field.getType();
              getIntialField(field);
              Annotation anno;
-             anno=field.getAnnotation(RjsonObject.class)==null?field.getAnnotation(RjsonObject.class):field.getAnnotation(RjsonObject.class);
+             anno=field.getAnnotation(RjsonObject.class)==null?field.getAnnotation(RjsonArray.class):field.getAnnotation(RjsonObject.class);
              anno=anno==null?field.getAnnotation(Ignorable.class):anno;
              if (anno != null) {
-                 Map<Field,Class<?>> tempmap=map.getOrDefault(anno.toString(),new LinkedHashMap<>());
+                 String objtype=anno.toString().substring(anno.toString().lastIndexOf(".")+1).replace("()","");
+                 Map<Field,Class<?>> tempmap=map.getOrDefault(objtype,new LinkedHashMap<>());
                  tempmap.put(field,fieldclazz);
-                 map.put(anno.toString(),tempmap);
+                 map.put(objtype,tempmap);
                  continue;
              }
              if(!isValidField(field)){
@@ -153,32 +158,26 @@ public class JMarshall<T> {
         return list;
     }
     private boolean isObject(String key,Field field){
-        validateFieldMatch(key,field);
-        return key.charAt(getFieldIndex(key,field))=='.'?true:false;
+        validateFieldMatch(key,field.getName());
+        return key.charAt(getFieldIndex(key,field.getName()))=='.'?true:false;
     }
     private boolean isArray(String key,Field field){
         validateFieldMatch(key,field.getName());
-        return key.charAt(getFieldIndex(key,field))=='['?true:false;
+        return key.charAt(getFieldIndex(key,field.getName()))=='['?true:false;
     }
-    private int getFieldIndex(String key){
+    private int getFieldIndex(String key,Field field){
         validateFieldMatch(key,rootkey);
         int rkl=rootkey.length();
         return rkl+key.substring(rkl).indexOf(field.getName())+field.getName().length();
     }
     private void validateFieldMatch(String key,String field){
-        int fl=field.length();
-        int kl=key.length();
-        if(!key.contains(field.getName())){
-            throw new FieldandKeyMatchException(key+" and "+field.getName()+" does not match");
+        if(!key.contains(field)){
+            throw new FieldandKeyMatchException(key+" and "+field+" does not match");
         }
     }
-
-    //Testing
     public int getFieldIndex(String key,String field){
+        validateFieldMatch(key,field);
         int rkl=rootkey.length();
-        if(rootkey.equals("")||!key.contains(rootkey)){
-            new FieldandKeyMatchException(key+" and "+field.length()+" does not match");
-        }
         return rkl+key.substring(rkl).indexOf(field)+field.length();
     }
 
@@ -187,14 +186,26 @@ public class JMarshall<T> {
         Class clazz=Class.forName(classname);
         Field[] fields=clazz.getDeclaredFields();
         Map<String,Map<Field,Class<?>>> map=getFieldMapping(clazz);
-        boolean firstflag=true;
+        META_ENUM meta;
         for(Field field:fields){
+            META_ENUM meta_enum;
+            for(String Robjects:map.keySet()){
+                if(map.get(Robjects).containsKey(field)){
+                    meta_enum=META_ENUM.getEnum(Robjects);
+                };
+            }
+            switch (meta_enum) {
+                case RJSONARRAY:
+                case RJSONOBJECT:
+                case RJSONROUTE:
+                case IGNORABLE:
+            }
+            /*Pair<>
             if(firstflag){
                 firstflag=true;
-            }
+            }*/
             String key=getFieldName(ESCAPE+Objname+ESCAPE+field.toString());
             //if(IsKeyObject(Key,field.name)){
-
             }
 
     }
