@@ -4,7 +4,8 @@ public enum META_ENUM {
     RJSONOBJECT("RjsonObject"),
     RJSONARRAY("RjsonArray"),
     RJSONROUTE("RjsonRoute"),
-    IGNORABLE("Ignorable");
+    IGNORABLE("Ignorable"),
+    RNULLABLE("Rnullable");
 
     private String classname;
     META_ENUM(String classname){

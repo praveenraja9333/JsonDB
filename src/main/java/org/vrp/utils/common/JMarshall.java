@@ -2,7 +2,10 @@ package org.vrp.utils.common;
 
 import org.vrp.utils.Model1;
 import org.vrp.utils.exceptions.FieldandKeyMatchException;
+import org.vrp.utils.exceptions.MethodNameNotFoundException;
 import org.vrp.utils.exceptions.ObjectNotSupportedException;
+import org.vrp.utils.exceptions.WrongMappingException;
+import org.vrp.utils.meta.FieldMap;
 import org.vrp.utils.meta.Ignorable;
 import org.vrp.utils.meta.RjsonArray;
 import org.vrp.utils.meta.RjsonObject;
@@ -10,10 +13,14 @@ import org.vrp.utils.meta.RjsonObject;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JMarshall<T> {
     private final String ESCAPE = "\\*";
+    private final String SETPREFIX="set";
     private LinkedHashMap<String, List<String>> fieldvaluemapping = new LinkedHashMap<>();
     private LinkedHashMap<String, List<String>> fieldKeymapping = new LinkedHashMap<>();
     private Map<String,List<String>> queryresultcache=new LinkedHashMap<>();
@@ -23,6 +30,10 @@ public class JMarshall<T> {
     private Class<T> clazz;
     private Field[] fields;
     private T _obj;
+    private Stack<Method> method=new Stack<>();
+    private Stack<String> rks=new Stack<>();
+    private boolean ignorablecurser=false;
+
 
     enum DA_TYPES {
         STRING(java.lang.String.class),
@@ -61,31 +72,36 @@ public class JMarshall<T> {
     public JMarshall(T _obj) {
         this._obj = _obj;
         System.out.println(this._obj.getClass().getName());
+
         //parser(this._obj.getClass());
         populateFields();
         //setClazz();
     }
 
     public Map<String, String> getKeyMap() {
+
         return keymap;
     }
 
     public void setKeyBinding(String fieldname, String jpath) {
+
         keymap.put(fieldname, jpath);
     }
 
     public void clearKeyBindings() {
+
         keymap.clear();
     }
 
     public void setMap(Map<String, String> map) {
+
         this.keymap = map;
     }
 
     private void setClazz() {
+
         clazz = (Class<T>) this._obj.getClass();
     }
-
 
     private void populateFields() {
         //fields = Class.forName();
@@ -98,6 +114,8 @@ public class JMarshall<T> {
         LinkedList<String> list=(LinkedList)getIntialField(initialField);
         while(!list.isEmpty()){
             String fieldname=list.pollFirst();
+            rootkey=fieldname.substring(0,fieldname.indexOf(initialField.getName()));
+            rks.push(rootkey);
             System.out.println(fieldname);
             //parseObject(fieldname);
         }
@@ -149,13 +167,14 @@ public class JMarshall<T> {
         }
         return list;
     }
-    public List<String> getField(String field){
+    public String getField(String field){
         Map<Character,JsonKeys> map=this.jsonParser.getKeydatastore();
+        String fieldname=rootkey+"\\*"+field;
         List<String> list=new LinkedList<>();
-        JsonKeys jk=map.get(field.charAt(0));
-        list.addAll(jk.get("\\*"+field));
+        JsonKeys jk=map.get(fieldname.charAt(0));
+        list.addAll(jk.get(fieldname));
 
-        return list;
+        return list.stream().collect(Collectors.joining(","));
     }
     private boolean isObject(String key,Field field){
         validateFieldMatch(key,field.getName());
@@ -180,15 +199,45 @@ public class JMarshall<T> {
         int rkl=rootkey.length();
         return rkl+key.substring(rkl).indexOf(field)+field.length();
     }
+    private<N> void insertObject(Method method, N childpojo ){
+            method
+    }
+    private Method getMethod(Field field,Class<?> clazz){
+        Method method=Arrays.asList(clazz.getDeclaredMethods()).stream().filter(m->m.getName().toLowerCase().contains(SETPREFIX+field.getName().toLowerCase())).findFirst().orElse(null);
+        if (method==null){
+            Annotation anno=field.getAnnotation(FieldMap.class);
+            FieldMap fm=anno!=null?(FieldMap)anno:null;
+            String mappedMethod=fm.fieldname();
+            method=Arrays.asList(clazz.getClass().getDeclaredMethods()).stream().filter(m->m.getName().toLowerCase().contains(mappedMethod.toLowerCase())).findFirst().orElse(null);
+            return method;
+        }
+        return null;
+    }
+    private<P> Object parsePremitive(P pojo,Field field) {
+            String value=getField(field.getName());
+            String key=rks.pop();
+            if(isObject(key,field)||isArray(key,field)||!ignorablecurser){
+                throw new WrongMappingException(key+"Is not primitive type. Check mapping or Configure the field nullable");
+            }
+            Method method=getMethod(field,pojo.getClass());
+            if(method==null){
+                throw new MethodNameNotFoundException("Assocatied method for field was not, Please check and set Proper POJO with standard convention or use FieldMap annotation for custom methodName");
+            }
+            String value=jsonParser.getTemp().get()
+            method.invoke(pojo);
+            return null;
+    }
 
     //Idea is to get the Object mapped for disered class
-    public  void parseObject(String classname,Field Objname) throws ClassNotFoundException {
-        Class clazz=Class.forName(classname);
-        Field[] fields=clazz.getDeclaredFields();
-        Map<String,Map<Field,Class<?>>> map=getFieldMapping(clazz);
+    public<P> P parseObject(Class<P> pojo) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Field[] fields=pojo.getClass().getDeclaredFields();
+        P obj=pojo.getDeclaredConstructor().newInstance();
+        Map<String,Map<Field,Class<?>>> map=getFieldMapping(pojo.getClass());
+        Method[] methods=pojo.getDeclaredMethods();
         META_ENUM meta;
         for(Field field:fields){
-            META_ENUM meta_enum;
+            ignorablecurser=false;
+            META_ENUM meta_enum=null;
             for(String Robjects:map.keySet()){
                 if(map.get(Robjects).containsKey(field)){
                     meta_enum=META_ENUM.getEnum(Robjects);
@@ -197,18 +246,25 @@ public class JMarshall<T> {
             switch (meta_enum) {
                 case RJSONARRAY:
                 case RJSONOBJECT:
+                    Method method=getMethod(field,pojo);
+                    method.invoke(obj,parseObject(field.getType()));
+                    break;
                 case RJSONROUTE:
                 case IGNORABLE:
+                case RNULLABLE:
+                    ignorablecurser=true;
+                default:
+                    rks.push(rootkey);
+                    parsePremitive(pojo,field);
+                    break;
             }
-            /*Pair<>
-            if(firstflag){
-                firstflag=true;
-            }*/
-            String key=getFieldName(ESCAPE+Objname+ESCAPE+field.toString());
-            //if(IsKeyObject(Key,field.name)){
+            //String key=getFieldName(ESCAPE+Objname+ESCAPE+field.toString());
             }
-
+        return obj;
     }
+
+
+
     public void parserArray(){
 
     }
@@ -221,7 +277,7 @@ public class JMarshall<T> {
         return fieldName;
     }
     public static void main(String[] args) throws ClassNotFoundException {
-        JsonParserImpl jsonParser = new JsonParserImpl();
+        /*JsonParserImpl jsonParser = new JsonParserImpl();
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\Array.json"));
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
@@ -233,6 +289,11 @@ public class JMarshall<T> {
         String Key="Hello.Hi.Bye";
         String field="Hi";
         int a=jMarshall.getFieldIndex(Key,field);
-        System.out.println(Key.substring(0,Key.lastIndexOf(field)+field.length()));
+        System.out.println(Key.substring(0,Key.lastIndexOf(field)+field.length()));*/
+        Method[] methods=Model1.class.getDeclaredMethods();
+        Method method=Arrays.asList(methods).stream().filter(s->s.getName().toLowerCase().contains("getsiteId".toLowerCase())).findFirst().orElse(null);
+
+            System.out.println("Methods "+method);
+
     }
 }
