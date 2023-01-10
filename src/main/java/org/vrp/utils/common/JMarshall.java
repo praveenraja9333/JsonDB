@@ -111,8 +111,9 @@ public class JMarshall<T> {
     }
     public void parser(Class classname) throws ClassNotFoundException {
         Field initialField=classname.getDeclaredFields()[0];
-        LinkedList<String> list=(LinkedList)getIntialField(initialField);
+        LinkedList<String> list=(LinkedList)getIntialFieldKey(initialField);
         while(!list.isEmpty()){
+            rks.clear();
             String fieldname=list.pollFirst();
             rootkey=fieldname.substring(0,fieldname.indexOf(initialField.getName()));
             rks.push(rootkey);
@@ -120,12 +121,14 @@ public class JMarshall<T> {
             //parseObject(fieldname);
         }
     }
+    public String getValue(String finalkey){
+        return jsonParser.getTemp().get(finalkey);
+    }
     private Map<String,Map<Field,Class<?>>> getFieldMapping(Class<?> clazz){
          Field[] fields=clazz.getDeclaredFields();
         Map<String,Map<Field,Class<?>>> map = new LinkedHashMap<>();
          for(Field field:fields) {
              Class<?> fieldclazz = field.getType();
-             getIntialField(field);
              Annotation anno;
              anno=field.getAnnotation(RjsonObject.class)==null?field.getAnnotation(RjsonArray.class):field.getAnnotation(RjsonObject.class);
              anno=anno==null?field.getAnnotation(Ignorable.class):anno;
@@ -158,7 +161,7 @@ public class JMarshall<T> {
         }
     }
 
-    public List<String> getIntialField(Field field){
+    public List<String> getIntialFieldKey(Field field){
         Map<Character,JsonKeys> map=this.jsonParser.getKeydatastore();
         List<String> list=new LinkedList<>();
         for(Character ch:map.keySet()){
@@ -167,9 +170,9 @@ public class JMarshall<T> {
         }
         return list;
     }
-    public String getField(String field){
+    public String getFieldKey(String field){
         Map<Character,JsonKeys> map=this.jsonParser.getKeydatastore();
-        String fieldname=rootkey+"\\*"+field;
+        String fieldname=rks.peek()+"\\*"+field;
         List<String> list=new LinkedList<>();
         JsonKeys jk=map.get(fieldname.charAt(0));
         list.addAll(jk.get(fieldname));
@@ -177,30 +180,35 @@ public class JMarshall<T> {
         return list.stream().collect(Collectors.joining(","));
     }
     private boolean isObject(String key,Field field){
-        validateFieldMatch(key,field.getName());
-        return key.charAt(getFieldIndex(key,field.getName()))=='.'?true:false;
+        validateFieldKeyMatch(key,field.getName());
+        return key.charAt(getFieldKeyIndex(key,field.getName()))=='.'?true:false;
     }
     private boolean isArray(String key,Field field){
-        validateFieldMatch(key,field.getName());
-        return key.charAt(getFieldIndex(key,field.getName()))=='['?true:false;
+        validateFieldKeyMatch(key,field.getName());
+        return key.charAt(getFieldKeyIndex(key,field.getName()))=='['?true:false;
     }
-    private int getFieldIndex(String key,Field field){
-        validateFieldMatch(key,rootkey);
+    private int getFieldKeyIndex(String key,Field field){
+        validateFieldKeyMatch(key,rootkey);
         int rkl=rootkey.length();
         return rkl+key.substring(rkl).indexOf(field.getName())+field.getName().length();
     }
-    private void validateFieldMatch(String key,String field){
+    private void validateFieldKeyMatch(String key,String field){
         if(!key.contains(field)){
             throw new FieldandKeyMatchException(key+" and "+field+" does not match");
         }
     }
-    public int getFieldIndex(String key,String field){
-        validateFieldMatch(key,field);
+    public int getFieldKeyIndex(String key,String field){
+        validateFieldKeyMatch(key,field);
         int rkl=rootkey.length();
         return rkl+key.substring(rkl).indexOf(field)+field.length();
     }
     private<N> void insertObject(Method method, N childpojo ){
             method
+    }
+    private String getRootkey(Field field){
+        String fetchedkey=getFieldKey(field.getName());
+        String returnkey= fetchedkey.substring(0,fetchedkey.indexOf(field.getName()));
+        return returnkey!=null?returnkey:null;
     }
     private Method getMethod(Field field,Class<?> clazz){
         Method method=Arrays.asList(clazz.getDeclaredMethods()).stream().filter(m->m.getName().toLowerCase().contains(SETPREFIX+field.getName().toLowerCase())).findFirst().orElse(null);
@@ -214,8 +222,8 @@ public class JMarshall<T> {
         return null;
     }
     private<P> Object parsePremitive(P pojo,Field field) {
-            String value=getField(field.getName());
-            String key=rks.pop();
+            String finalkey=getFieldKey(field.getName());
+            String key=rks.peek();
             if(isObject(key,field)||isArray(key,field)||!ignorablecurser){
                 throw new WrongMappingException(key+"Is not primitive type. Check mapping or Configure the field nullable");
             }
@@ -223,7 +231,6 @@ public class JMarshall<T> {
             if(method==null){
                 throw new MethodNameNotFoundException("Assocatied method for field was not, Please check and set Proper POJO with standard convention or use FieldMap annotation for custom methodName");
             }
-            String value=jsonParser.getTemp().get()
             method.invoke(pojo);
             return null;
     }
@@ -232,6 +239,7 @@ public class JMarshall<T> {
     public<P> P parseObject(Class<P> pojo) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Field[] fields=pojo.getClass().getDeclaredFields();
         P obj=pojo.getDeclaredConstructor().newInstance();
+        rootkey=rks.peek();
         Map<String,Map<Field,Class<?>>> map=getFieldMapping(pojo.getClass());
         Method[] methods=pojo.getDeclaredMethods();
         META_ENUM meta;
@@ -246,6 +254,9 @@ public class JMarshall<T> {
             switch (meta_enum) {
                 case RJSONARRAY:
                 case RJSONOBJECT:
+                    String tempkey=getRootkey(field);
+                    validateRookKey(tempkey,true);
+                    rks.push(rootkey);
                     Method method=getMethod(field,pojo);
                     method.invoke(obj,parseObject(field.getType()));
                     break;
@@ -254,15 +265,21 @@ public class JMarshall<T> {
                 case RNULLABLE:
                     ignorablecurser=true;
                 default:
-                    rks.push(rootkey);
-                    parsePremitive(pojo,field);
+                    parsePremitive(obj,field);
                     break;
             }
             //String key=getFieldName(ESCAPE+Objname+ESCAPE+field.toString());
             }
+        rks.pop();
         return obj;
     }
 
+    private boolean validateRookKey(String tempkey,boolean errorflag) {
+        if(tempkey==null&&errorflag){
+            throw new FieldandKeyMatchException(rootkey+" Is not valid key. Please check");
+        }
+        return tempkey==null;
+    }
 
 
     public void parserArray(){

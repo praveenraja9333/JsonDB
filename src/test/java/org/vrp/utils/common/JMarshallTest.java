@@ -34,7 +34,7 @@ public class JMarshallTest {
         String Key="Hello.Hi.Bye";
         String field="Hi";
         //assertEquals(9,jMarshall.getFieldIndex(Key,field));
-        assertEquals('.',Key.charAt(jMarshall.getFieldIndex(Key,field)));
+        assertEquals('.',Key.charAt(jMarshall.getFieldKeyIndex(Key,field)));
     }
     public void loadJson(){
 
