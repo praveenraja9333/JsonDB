@@ -5,8 +5,10 @@ import org.vrp.utils.meta.RjsonArray;
 import org.vrp.utils.meta.RjsonObject;
 
 public class Model1 {
-    @RjsonObject
+    /*@RjsonObject
     private Model1 model;
+     @RjsonArray
+    private Model1 model1;
 
     public Model1 getModel() {
         return model;
@@ -14,16 +16,29 @@ public class Model1 {
 
     public void setModel(Model1 model) {
         this.model = model;
-    }
+    }*/
 
-    public Model1 getModel1() {
+    /*public Model1 getModel1() {
         return model1;
     }
 
     public void setModel1(Model1 model1) {
         this.model1 = model1;
+    }*/
+    //@Ignorable
+
+
+    private String siteId;
+
+    public String getCountryCode() {
+        return countryCode;
     }
 
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    private String countryCode;
     public String getSiteId() {
         return siteId;
     }
@@ -32,18 +47,6 @@ public class Model1 {
         this.siteId = siteId;
     }
 
-    //@Ignorable
-    @RjsonArray
-    private Model1 model1;
-    private String siteId;
-    private String supportPhoneNumber;
-    public String getSupportPhoneNumber() {
-        return supportPhoneNumber;
-    }
-
-    public void setSupportPhoneNumber(String supportPhoneNumber) {
-        this.supportPhoneNumber = supportPhoneNumber;
-    }
 
 
 }

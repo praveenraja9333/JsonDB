@@ -34,6 +34,7 @@ public class JMarshall<T> {
     private Stack<String> rks=new Stack<>();
     private boolean ignorablecurser=false;
 
+    private ArrayList<Model1> arrtemp=new ArrayList<>();
 
     enum DA_TYPES {
         STRING(java.lang.String.class),
@@ -109,7 +110,7 @@ public class JMarshall<T> {
     public void setJsonParser(JsonParserImpl jsonParserimpl) {
         this.jsonParser = jsonParserimpl;
     }
-    public void parser(Class classname) throws ClassNotFoundException {
+    public void parser(Class classname) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         Field initialField=classname.getDeclaredFields()[0];
         LinkedList<String> list=(LinkedList)getIntialFieldKey(initialField);
         while(!list.isEmpty()){
@@ -118,7 +119,9 @@ public class JMarshall<T> {
             rootkey=fieldname.substring(0,fieldname.indexOf(initialField.getName()));
             rks.push(rootkey);
             System.out.println(fieldname);
-            //parseObject(fieldname);
+            Model1 m=(Model1)parseObject(classname);
+            arrtemp.add(m);
+            System.out.println(m.getSiteId()+"            "+m.getCountryCode());
         }
     }
     public String getValue(String finalkey){
@@ -181,19 +184,24 @@ public class JMarshall<T> {
     }
     private boolean isObject(String key,Field field){
         validateFieldKeyMatch(key,field.getName());
+        if(getFieldKeyIndex(key,field.getName())<key.length())
         return key.charAt(getFieldKeyIndex(key,field.getName()))=='.'?true:false;
+    return false;
     }
     private boolean isArray(String key,Field field){
         validateFieldKeyMatch(key,field.getName());
+        if(getFieldKeyIndex(key,field.getName())<key.length())
         return key.charAt(getFieldKeyIndex(key,field.getName()))=='['?true:false;
+        return false;
     }
     private int getFieldKeyIndex(String key,Field field){
         validateFieldKeyMatch(key,rootkey);
         int rkl=rootkey.length();
-        return rkl+key.substring(rkl).indexOf(field.getName())+field.getName().length();
+
+        return rkl+key.substring(rkl).indexOf(field.getName())+field.getName().length()-1;
     }
     private void validateFieldKeyMatch(String key,String field){
-        if(!key.contains(field)){
+        if(!key.toLowerCase().contains(field.toLowerCase())){
             throw new FieldandKeyMatchException(key+" and "+field+" does not match");
         }
     }
@@ -203,7 +211,7 @@ public class JMarshall<T> {
         return rkl+key.substring(rkl).indexOf(field)+field.length();
     }
     private<N> void insertObject(Method method, N childpojo ){
-            method
+            //method
     }
     private String getRootkey(Field field){
         String fetchedkey=getFieldKey(field.getName());
@@ -219,28 +227,29 @@ public class JMarshall<T> {
             method=Arrays.asList(clazz.getClass().getDeclaredMethods()).stream().filter(m->m.getName().toLowerCase().contains(mappedMethod.toLowerCase())).findFirst().orElse(null);
             return method;
         }
-        return null;
+        return method;
     }
-    private<P> Object parsePremitive(P pojo,Field field) {
+    private<P> Object parsePremitive(P pojo,Field field) throws InvocationTargetException, IllegalAccessException {
             String finalkey=getFieldKey(field.getName());
             String key=rks.peek();
-            if(isObject(key,field)||isArray(key,field)||!ignorablecurser){
+            if(isObject(finalkey,field)||isArray(finalkey,field)&&!ignorablecurser){
                 throw new WrongMappingException(key+"Is not primitive type. Check mapping or Configure the field nullable");
             }
             Method method=getMethod(field,pojo.getClass());
             if(method==null){
                 throw new MethodNameNotFoundException("Assocatied method for field was not, Please check and set Proper POJO with standard convention or use FieldMap annotation for custom methodName");
             }
-            method.invoke(pojo);
-            return null;
+            String value=jsonParser.getTemp().get(finalkey);
+            method.invoke(pojo,value);
+            return pojo;
     }
 
     //Idea is to get the Object mapped for disered class
     public<P> P parseObject(Class<P> pojo) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        Field[] fields=pojo.getClass().getDeclaredFields();
+        Field[] fields=pojo.getDeclaredFields();
         P obj=pojo.getDeclaredConstructor().newInstance();
         rootkey=rks.peek();
-        Map<String,Map<Field,Class<?>>> map=getFieldMapping(pojo.getClass());
+        Map<String,Map<Field,Class<?>>> map=getFieldMapping(pojo);
         Method[] methods=pojo.getDeclaredMethods();
         META_ENUM meta;
         for(Field field:fields){
@@ -251,6 +260,7 @@ public class JMarshall<T> {
                     meta_enum=META_ENUM.getEnum(Robjects);
                 };
             }
+            if(meta_enum==null)meta_enum=META_ENUM.PRIMITIVES;
             switch (meta_enum) {
                 case RJSONARRAY:
                 case RJSONOBJECT:
@@ -293,24 +303,23 @@ public class JMarshall<T> {
         }
         return fieldName;
     }
-    public static void main(String[] args) throws ClassNotFoundException {
-        /*JsonParserImpl jsonParser = new JsonParserImpl();
-        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\Array.json"));
+    public static void main(String[] args) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        JsonParserImpl jsonParser = new JsonParserImpl();
+        //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\Array.json"));
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
-        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
+        //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
         LinkedHashMap<Character, JsonKeys> l = jsonParser.getKeydatastore();
         JMarshall jMarshall=new JMarshall(new Model1());
         jMarshall.setJsonParser(jsonParser);
         jMarshall.parser(Model1.class);
+        ArrayList a=jMarshall.arrtemp;
         Map map=jMarshall.getFieldMapping(Model1.class);
         String Key="Hello.Hi.Bye";
         String field="Hi";
-        int a=jMarshall.getFieldIndex(Key,field);
-        System.out.println(Key.substring(0,Key.lastIndexOf(field)+field.length()));*/
+        //int a=jMarshall.getFieldIndex(Key,field);
+        System.out.println(Key.substring(0,Key.lastIndexOf(field)+field.length()));
         Method[] methods=Model1.class.getDeclaredMethods();
         Method method=Arrays.asList(methods).stream().filter(s->s.getName().toLowerCase().contains("getsiteId".toLowerCase())).findFirst().orElse(null);
-
             System.out.println("Methods "+method);
-
     }
 }
