@@ -82,11 +82,13 @@ public class JsonParserImpl {
                     break;
                 case END_OBJECT:
                     reader.endObject();
-                    if (!root.equals("") && root.contains(".")) {
+                    if (!root.equals("") && root.contains(".")&& ']'!=root.charAt(root.length()-1) ) {
                         root = root.substring(0, root.lastIndexOf("."));
-                    } else if (!root.equals("")) {
+                    } else if (!root.equals("")&&']'!=root.charAt(root.length()-1)) {
                         root = "";
-                    }
+                    } else if(!root.equals("")&&']'==root.charAt(root.length()-1)){
+                        root = root.substring(0, root.lastIndexOf("["));
+                     }
                     return;
                 case BOOLEAN:
                     value = String.valueOf(reader.nextBoolean());
@@ -170,7 +172,7 @@ public class JsonParserImpl {
     }
     public static void main(String[] args) {
         JsonParserImpl jsonParser = new JsonParserImpl();
-        jsonParser.init("[\n" +
+       /* jsonParser.init("[\n" +
                 "    {\n" +
                 "        \"name\": \"Jason\",\n" +
                 "        \"gender\": \"M\",\n" +
@@ -186,10 +188,10 @@ public class JsonParserImpl {
                 "        \"gender\": \"M\",\n" +
                 "        \"age\": 19\n" +
                 "    }\n" +
-                "]");
-        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\Array.json"));
-        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
-        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
+                "]");  */
+        //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\Array.json"));
+        //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
+        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\test9.json"));
         LinkedHashMap<Character, JsonKeys> l = jsonParser.keydatastore;
        // JMarshall jMarshall=new JMarshall();
     }

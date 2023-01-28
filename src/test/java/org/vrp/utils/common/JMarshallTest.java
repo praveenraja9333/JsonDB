@@ -1,11 +1,12 @@
 package org.vrp.utils.common;
 
-import org.testng.annotations.Test;
-import org.vrp.utils.Model1;
+import org.junit.Before;
+import org.junit.Test;
+import org.vrp.utils.Models.Model1;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -13,6 +14,7 @@ import static org.testng.AssertJUnit.assertTrue;
 public class JMarshallTest {
     JsonParserImpl jsonParser=null;
     JMarshall jMarshall=null;
+    @Before
     public void init(){
         JsonParserImpl jsonParser = new JsonParserImpl();
 
@@ -20,15 +22,15 @@ public class JMarshallTest {
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
         LinkedHashMap<Character, JsonKeys> l = jsonParser.getKeydatastore();
-        JMarshall jMarshall=new JMarshall(new Model1());
+        jMarshall=new JMarshall(new Model1());
     }
-    @Test
+   @Test
     public void getFieldIndexTest(){
-        init();
         jMarshall.setJsonParser(jsonParser);
         try {
             jMarshall.parser(Model1.class);
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException | InstantiationException |
+                 IllegalAccessException e) {
             throw new RuntimeException(e);
         }
         String Key="Hello.Hi.Bye";

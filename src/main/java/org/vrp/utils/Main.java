@@ -7,12 +7,12 @@ import java.lang.reflect.InvocationTargetException;
 
 public class Main {
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        /*JsonParserImpl< "org.vrp.utils.Model1"> jsonParser = new JsonParserImpl();
-        JMarshall<Model1> marshaller=new JMarshall(Class.forName("org.vrp.utils.Model1").getDeclaredConstructor().newInstance());
+        /*JsonParserImpl< "org.vrp.utils.Models.Model1"> jsonParser = new JsonParserImpl();
+        JMarshall<Model1> marshaller=new JMarshall(Class.forName("org.vrp.utils.Models.Model1").getDeclaredConstructor().newInstance());
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         marshaller.setJsonParser(jsonParser);*/
         //marshaller.parse();
-        String classname="org.vrp.utils.Model1";
+        String classname="org.vrp.utils.Models.Model1";
         getClazz(Class.forName(classname));
     }
     public static void getClazz(Class<?> classname) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {

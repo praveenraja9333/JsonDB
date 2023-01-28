@@ -1,12 +1,19 @@
-package org.vrp.utils;
+package org.vrp.utils.Models;
 
-import org.vrp.utils.meta.Ignorable;
-import org.vrp.utils.meta.RjsonArray;
 import org.vrp.utils.meta.RjsonObject;
 
 public class Model1 {
-    /*@RjsonObject
-    private Model1 model;
+    public SupportPhoneNumber getSupportPhoneNumber() {
+        return supportPhoneNumber;
+    }
+
+    public void setSupportPhoneNumber(SupportPhoneNumber supportPhoneNumber) {
+        this.supportPhoneNumber = supportPhoneNumber;
+    }
+
+    @RjsonObject
+    private  SupportPhoneNumber supportPhoneNumber;
+   /*
      @RjsonArray
     private Model1 model1;
 
