@@ -52,50 +52,44 @@ public class JsonKeys {
         }
     }
 
-    private void getdfs(Node<Character> node, String fixed, int pos, String create, boolean regflag) {
+    private void getDfs(Node<Character> node, String fixed, int pos, String create, boolean regflag) {
         boolean end = false;
-        Character currentchar = null;
-        String currentnodevalue = node.value.toString();
+        Character currentChar = null;
+        String currentNodeValue = node.value.toString();
         if (pos >= fixed.length()) {
             end = true;
         } else {
-            currentchar = fixed.charAt(pos);
+            currentChar = fixed.charAt(pos);
         }
         if (!end && fixed.charAt(pos) == '\\' && fixed.charAt(pos + 1) == '*') {
             pos = pos + 2;
-            getdfs(node, fixed, pos, create, true);
+            getDfs(node, fixed, pos, create, true);
             return;
         }
-        if (node.value.equals(currentchar)) {
+        if (node.value.equals(currentChar)) {
             pos++;
             for (Node<Character> child : node.children) {
-                getdfs(child, fixed, pos, create + currentnodevalue, false);
+                getDfs(child, fixed, pos, create + currentNodeValue, false);
             }
         } else if (end) {
             for (Node<Character> child : node.children) {
-                getdfs(child, fixed, pos, create + currentnodevalue, regflag);
+                getDfs(child, fixed, pos, create + currentNodeValue, regflag);
             }
         } else if (regflag) {
             for (Node<Character> child : node.children) {
-                getdfs(child, fixed, pos, create + currentnodevalue, regflag);
+                getDfs(child, fixed, pos, create + currentNodeValue, regflag);
             }
         }
-        if(node.children.size()==0 && pos == fixed.length()){
-            populatelist.add(create + currentnodevalue);
+        if (node.children.size() == 0 && pos == fixed.length()) {
+            populatelist.add(create + currentNodeValue);
         }
     }
 
     public ArrayList<String> get(String key) {
         populatelist.clear();
-        boolean regflag = false;
-        getdfs(root, key, 0, "", regflag);
+        boolean regFlag = false;
+        getDfs(root, key, 0, "", regFlag);
         return populatelist;
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
-        JsonKeys j = new JsonKeys();
-        BufferedInputStream bf = new BufferedInputStream(new FileInputStream(""));
-        j.add("abcdfg");
-        j.add("abcek");
-    }
 }

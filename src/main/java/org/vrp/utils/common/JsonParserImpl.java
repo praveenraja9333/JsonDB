@@ -5,9 +5,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.regex.Pattern;
 
 public class JsonParserImpl {
     private JsonReader reader;
@@ -82,13 +80,13 @@ public class JsonParserImpl {
                     break;
                 case END_OBJECT:
                     reader.endObject();
-                    if (!root.equals("") && root.contains(".")&& ']'!=root.charAt(root.length()-1) ) {
+                    if (!root.equals("") && root.contains(".") && ']' != root.charAt(root.length() - 1)) {
                         root = root.substring(0, root.lastIndexOf("."));
-                    } else if (!root.equals("")&&']'!=root.charAt(root.length()-1)) {
+                    } else if (!root.equals("") && ']' != root.charAt(root.length() - 1)) {
                         root = "";
-                    } else if(!root.equals("")&&']'==root.charAt(root.length()-1)){
+                    } else if (!root.equals("") && ']' == root.charAt(root.length() - 1)) {
                         root = root.substring(0, root.lastIndexOf("["));
-                     }
+                    }
                     return;
                 case BOOLEAN:
                     value = String.valueOf(reader.nextBoolean());
@@ -152,24 +150,27 @@ public class JsonParserImpl {
                     break;
                 case END_DOCUMENT:
                     return;
-                default:return;
+                default:
+                    return;
             }
 
         }
     }
+
     public LinkedHashMap<String, String> getTemp() {
-        if(temp==null||temp.size()==0){
-            throw(new RuntimeException("value cache is null, please parse the json file or string"));
+        if (temp == null || temp.size() == 0) {
+            throw (new RuntimeException("value cache is null, please parse the json file or string"));
         }
         return temp;
     }
 
-    public LinkedHashMap<Character, JsonKeys> getKeydatastore() {
-        if(keydatastore==null|| keydatastore.size()==0){
-            throw(new RuntimeException("key value cache is null, please parse the json file or string"));
+    public LinkedHashMap<Character, JsonKeys> getKeyDataStore() {
+        if (keydatastore == null || keydatastore.size() == 0) {
+            throw (new RuntimeException("key value cache is null, please parse the json file or string"));
         }
         return keydatastore;
     }
+
     public static void main(String[] args) {
         JsonParserImpl jsonParser = new JsonParserImpl();
        /* jsonParser.init("[\n" +
@@ -193,6 +194,6 @@ public class JsonParserImpl {
         //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\test9.json"));
         LinkedHashMap<Character, JsonKeys> l = jsonParser.keydatastore;
-       // JMarshall jMarshall=new JMarshall();
+        // JMarshall jMarshall=new JMarshall();
     }
 }
