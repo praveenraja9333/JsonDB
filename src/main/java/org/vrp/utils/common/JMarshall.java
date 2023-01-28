@@ -2,6 +2,7 @@ package org.vrp.utils.common;
 
 import org.vrp.utils.Models.GitUserlogin;
 import org.vrp.utils.Models.Model1;
+import org.vrp.utils.Models.SampleArray;
 import org.vrp.utils.exceptions.FieldandKeyMatchException;
 import org.vrp.utils.exceptions.MethodNameNotFoundException;
 import org.vrp.utils.exceptions.ObjectNotSupportedException;
@@ -107,10 +108,13 @@ public class JMarshall<T> {
         Map<String, String> fieldMap = getFieldMapping(pojo);
         Method[] methods = pojo.getDeclaredMethods();
         META_ENUM meta;
+
         for (Field field : fields) {
             String fName = fieldMap.get(field.getName());
             fName = fName == null ? field.getName() : fName;
             ignorablecurser = false;
+            String tempKey;
+            Method method;
             META_ENUM meta_enum = null;
             for (String Robjects : map.keySet()) {
                 if (map.get(Robjects).containsKey(field)) {
@@ -121,11 +125,17 @@ public class JMarshall<T> {
             if (meta_enum == null) meta_enum = META_ENUM.PRIMITIVES;
             switch (meta_enum) {
                 case RJSONARRAY:
+                    tempKey = getRootkey(fName);
+                    validateRookKey(tempKey, true);
+                    rks.push(rootkey + fName);
+                    method = getMethod(field, pojo);
+                    method.invoke(obj,parseArray(field,obj));
+                    break;
                 case RJSONOBJECT:
-                    String tempkey = getRootkey(fName);
-                    validateRookKey(tempkey, true);
+                     tempKey = getRootkey(fName);
+                    validateRookKey(tempKey, true);
                     rks.push(rootkey + fName + ".");
-                    Method method = getMethod(field, pojo);
+                    method = getMethod(field, pojo);
                     method.invoke(obj, parseObject(field.getType()));
                     break;
                 case RJSONROUTE:
@@ -142,11 +152,46 @@ public class JMarshall<T> {
         rootkey = rks.isEmpty() ? "" : rks.peek();
         return obj;
     }
+    private<P> List<Object> parseArray(Field field,P pojo){
+        RjsonArray rar=(RjsonArray) field.getAnnotation(RjsonArray.class);
+        boolean premitiveflag=false;
+        LinkedList<Object> returnlist;
+        Class<?> clazz;
+        try {
+            String type=rar.type();
+            clazz= Class.forName(rar.type());
+            returnlist=new LinkedList<>();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        if(isPremitive(clazz)){
+            premitiveflag=true;
+        }
+        int counter=0;
+        while (true) {
+            String finalKey = getExactFieldKey("["+counter++ +"]");
+            String value = jsonParser.getTemp().get(finalKey);
+            String key = rks.peek();
 
-    private <P> Object parsePremitive(P pojo, Field field, String fieldname) throws InvocationTargetException, IllegalAccessException {
-        String finalKey = getExactFieldKey(fieldname);
+            if (value!=null&&"".equals(value)&&isObject(finalKey, field.getName()) && !ignorablecurser) {
+                throw new WrongMappingException(key + "Is not primitive type. Check mapping or Configure the field nullable");
+            }
+            System.out.println("Hello");
+            if(value!=null&&!value.equals("")){
+                returnlist.add(value);
+            }else{
+                break;
+            }
+        }
+       return returnlist;
+    }
+
+
+
+    private <P> Object parsePremitive(P pojo, Field field, String fieldName) throws InvocationTargetException, IllegalAccessException {
+        String finalKey = getExactFieldKey(fieldName);
         String key = rks.peek();
-        if (isObject(finalKey, fieldname) || isArray(finalKey, fieldname) && !ignorablecurser) {
+        if (isObject(finalKey, fieldName) || isArray(finalKey, fieldName) && !ignorablecurser) {
             throw new WrongMappingException(key + "Is not primitive type. Check mapping or Configure the field nullable");
         }
         Method method = getMethod(field, pojo.getClass());
@@ -158,11 +203,11 @@ public class JMarshall<T> {
         return pojo;
     }
 
-    private boolean validateRookKey(String tempkey, boolean errorflag) {
-        if (tempkey == null && errorflag) {
+    private boolean validateRookKey(String tempKey, boolean errorFlag) {
+        if (tempKey == null && errorFlag) {
             throw new FieldandKeyMatchException(rootkey + " Is not valid key. Please check");
         }
-        return tempkey == null;
+        return tempKey == null;
     }
 
 
@@ -241,7 +286,8 @@ public class JMarshall<T> {
             anno = field.getAnnotation(RjsonObject.class) == null ? field.getAnnotation(RjsonArray.class) : field.getAnnotation(RjsonObject.class);
             anno = anno == null ? field.getAnnotation(Ignorable.class) : anno;
             if (anno != null) {
-                String objType = anno.toString().substring(anno.toString().lastIndexOf(".") + 1).replace("()", "");
+                String objType = anno.toString().replaceAll("\\(.*\\)", "");//
+                objType=objType.substring(objType.lastIndexOf(".") + 1);
                 Map<Field, Class<?>> tempMap = map.getOrDefault(objType, new LinkedHashMap<>());
                 tempMap.put(field, fieldClazz);
                 map.put(objType, tempMap);
@@ -286,6 +332,20 @@ public class JMarshall<T> {
 
     private boolean isValidField(Field field) {
         Class<?> clazz = field.getType();
+        DA_TYPES da_type = DA_TYPES.getFromClazz(clazz);
+        switch (da_type) {
+            case STRING:
+            case INTEGER:
+            case FLOAT:
+            case LONG:
+            case DOUBLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isPremitive(Class<?> clazz) {
         DA_TYPES da_type = DA_TYPES.getFromClazz(clazz);
         switch (da_type) {
             case STRING:

@@ -1,8 +1,27 @@
 package org.vrp.utils.Models;
 
+import org.vrp.utils.meta.RjsonArray;
 import org.vrp.utils.meta.RjsonObject;
 
+import java.util.List;
+
 public class Model1 {
+    @RjsonObject
+    private  SupportPhoneNumber supportPhoneNumber;
+
+    private String siteId;
+    private String countryCode;
+    @RjsonArray(type="java.lang.String")
+    private List<String> automaticallyMappedLocales;
+
+    public List<String> getAutomaticallyMappedLocales() {
+        return automaticallyMappedLocales;
+    }
+
+    public void setAutomaticallyMappedLocales(List<String> automaticallyMappedLocales) {
+        this.automaticallyMappedLocales = automaticallyMappedLocales;
+    }
+
     public SupportPhoneNumber getSupportPhoneNumber() {
         return supportPhoneNumber;
     }
@@ -10,20 +29,6 @@ public class Model1 {
     public void setSupportPhoneNumber(SupportPhoneNumber supportPhoneNumber) {
         this.supportPhoneNumber = supportPhoneNumber;
     }
-
-    @RjsonObject
-    private  SupportPhoneNumber supportPhoneNumber;
-   /*
-     @RjsonArray
-    private Model1 model1;
-
-    public Model1 getModel() {
-        return model;
-    }
-
-    public void setModel(Model1 model) {
-        this.model = model;
-    }*/
 
     /*public Model1 getModel1() {
         return model1;
@@ -35,7 +40,7 @@ public class Model1 {
     //@Ignorable
 
 
-    private String siteId;
+
 
     public String getCountryCode() {
         return countryCode;
@@ -45,7 +50,7 @@ public class Model1 {
         this.countryCode = countryCode;
     }
 
-    private String countryCode;
+
     public String getSiteId() {
         return siteId;
     }
