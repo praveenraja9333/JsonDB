@@ -88,12 +88,18 @@ public class JMarshall<T> {
         LinkedList<String> list = (LinkedList) getIntialFieldKey(initialField);
         if (list.isEmpty()) return;
         String parentString = list.get(0);
+        int parentlength= parentString.split("\\.").length;
         boolean array=false;
         int counter=0;
-        if(parentString.charAt(parentString.indexOf(initialField)+initialField.length())=='['){
-            array=true;
+        int indexIndex=parentString.indexOf(initialField)+initialField.length();
+        if(parentString.length()>indexIndex&&parentString.charAt(indexIndex)=='['){
+            array=true;;
+            parentString=parentString.substring(0,indexIndex);
+            list.clear();
+            list.add(parentString);
+        }else {
+            list = new LinkedList<>(list.stream().filter(s -> s.split("\\.").length == parentlength).sorted().collect(Collectors.toList()));
         }
-        list = new LinkedList<>(list.stream().filter(s -> s.split("\\.").length == parentString.split("\\.").length).sorted().collect(Collectors.toList()));
         while (!list.isEmpty()) {
             rks.clear();
             String fieldName = list.pollFirst();
@@ -101,9 +107,6 @@ public class JMarshall<T> {
             rks.push(rootkey);
             System.out.println(fieldName);
             System.out.println("FieldName " + fieldName);
-            if(array) {
-
-            }
             T m = (T) parseObject(classname);
             arrtemp.add(m);
         }
@@ -136,28 +139,26 @@ public class JMarshall<T> {
             switch (meta_enum) {
                 case RJSONARRAY:
                     tempKey = getRootkey(fName);
-                    if ("".equals(tempKey)) {
+                    if (tempKey==null) {
                         Map<Field, Class<?>> mapset = map.get("Rnullable");
                         if (mapset != null && mapset.get(field) != null) break;
                         else {
                             throw new MandatoryMemberMissingException(field.getName() + " field missing, Consider making nullable or check with source");
                         }
                     }
-                    validateRookKey(tempKey, true);
                     rks.push(rootkey + fName);
                     method = getMethod(field, pojo);
                     method.invoke(obj, parseArray(field, obj));
                     break;
                 case RJSONOBJECT:
                     tempKey = getRootkey(fName);
-                    if ("".equals(tempKey)) {
+                    if (tempKey==null) {
                         Map<Field, Class<?>> mapset = map.get("Rnullable");
                         if (mapset != null && mapset.get(field) != null) break;
                         else {
                             throw new MandatoryMemberMissingException(field.getName() + " field missing, Consider making nullable or check with source");
                         }
                     }
-                    validateRookKey(tempKey, true);
                     rks.push(rootkey + fName + ".");
                     method = getMethod(field, pojo);
                     method.invoke(obj, parseObject(field.getType()));
@@ -285,7 +286,7 @@ public class JMarshall<T> {
 
     private String getRootkey(String fieldName) {
         String fetchedKey = getFieldKey(fieldName);
-        if ("".equals(fetchedKey)) return fetchedKey;
+        if ("".equals(fetchedKey)) return null;
         String returnKey = fetchedKey.substring(0, fetchedKey.indexOf(fieldName));
         return returnKey != null ? returnKey : null;
     }
