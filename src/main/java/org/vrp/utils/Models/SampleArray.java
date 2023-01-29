@@ -9,7 +9,7 @@ public class SampleArray {
 
     String name;
     String gender;
-    String age;
+    int age;
     @RjsonArray( type="java.lang.String")
     List<String> languages;
 
@@ -29,11 +29,11 @@ public class SampleArray {
         this.gender = gender;
     }
 
-    public String getAge() {
+    public int getAge() {
         return age;
     }
 
-    public void setAge(String age) {
+    public void setAge(int age) {
         this.age = age;
     }
 

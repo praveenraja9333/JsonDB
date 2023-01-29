@@ -2,12 +2,15 @@ package org.vrp.utils.Models;
 
 import org.vrp.utils.meta.FieldMap;
 import org.vrp.utils.meta.RjsonObject;
+import org.vrp.utils.meta.RootElement;
 
 public class GitUserlogin {
 
-
+    @RootElement
     String id;
     String type;
+
+    String login;
     @FieldMap(fieldname = "actor.id")
     String actorid;
     @RjsonObject
