@@ -13,6 +13,10 @@ public class Model1 {
     private String countryCode;
     @RjsonArray(type="java.lang.String")
     private List<String> automaticallyMappedLocales;
+
+    /*RootElement Annotates to choose which considered as root for the collection of data to be returned
+    @FieldMap Annotation maps the search string from the source
+     */
     @RootElement
     @FieldMap(fieldname = "TPID")
     private int tpId;

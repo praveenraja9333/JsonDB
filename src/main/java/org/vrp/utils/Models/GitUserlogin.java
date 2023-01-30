@@ -16,6 +16,14 @@ public class GitUserlogin {
     @RjsonObject
     Repo repo;
 
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
     public String getId() {
         return id;
     }
