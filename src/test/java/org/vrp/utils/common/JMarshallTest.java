@@ -21,8 +21,8 @@ public class JMarshallTest {
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\Array.json"));
         jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
-        LinkedHashMap<Character, JsonKeys> l = jsonParser.getKeydatastore();
-        jMarshall=new JMarshall(new Model1());
+        LinkedHashMap<Character, JsonKeys> l = jsonParser.getKeyDataStore();
+        jMarshall=new JMarshall();
     }
    @Test
     public void getFieldIndexTest(){

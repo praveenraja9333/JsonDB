@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JMarshall<T> {
+public class JMarshall<T>{
     private final String ESCAPE = "\\*";
     private final String SETPREFIX = "set";
     private LinkedHashMap<String, List<String>> fieldvaluemapping = new LinkedHashMap<>();
@@ -29,6 +29,10 @@ public class JMarshall<T> {
     private boolean ignorablecurser = false;
 
     private ArrayList<T> arrtemp = new ArrayList<>();
+
+    public ArrayList<T> getArrtemp() {
+        return arrtemp;
+    }
 
     enum DA_TYPES {
         STRING(java.lang.String.class), DOUBLE(java.lang.Double.class), INTEGER(java.lang.Integer.class), FLOAT(java.lang.Float.class), LONG(java.lang.Long.class), DEFAULT(Object.class);
@@ -67,12 +71,6 @@ public class JMarshall<T> {
 
     public JMarshall() {
 
-    }
-
-
-    private void setClazz() {
-
-        clazz = (Class<T>) this._obj.getClass();
     }
 
     public void setJsonParser(JsonParserImpl jsonParserimpl) {
