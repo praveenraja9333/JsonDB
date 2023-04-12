@@ -232,7 +232,7 @@ public class JMarshall<T>{
         String finalKey = getExactFieldKey(fieldName);
         finalKey=finalKey.equals("")?getFieldKey(fieldName):finalKey;
         String key = rks.peek();
-        if ((isObject(finalKey, fieldName) || isArray(finalKey, fieldName)) && !ignorablecurser) {
+        if (!ignorablecurser && (isObject(finalKey, fieldName) || isArray(finalKey, fieldName))) {
             throw new WrongMappingException(key + fieldName + " Is not primitive type. Check mapping or Configure the field nullable");
         }
         Method method = getMethod(field, pojo.getClass());

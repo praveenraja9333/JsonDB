@@ -74,7 +74,11 @@ public class JsonParserImpl {
                     temp.put(name, value);
                     break;
                 case NUMBER:
-                    value = String.valueOf(reader.nextLong());
+                    try{
+                        value = String.valueOf(reader.nextLong());
+                    }catch (NumberFormatException e){
+                        value= String.valueOf(reader.nextDouble());
+                    }
                     addKeystore(name);
                     temp.put(name, value);
                     break;
