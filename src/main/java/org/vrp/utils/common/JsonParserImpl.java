@@ -74,7 +74,11 @@ public class JsonParserImpl {
                     temp.put(name, value);
                     break;
                 case NUMBER:
-                    value = String.valueOf(reader.nextLong());
+                    try{
+                        value = String.valueOf(reader.nextLong());
+                    }catch (NumberFormatException e){
+                        value= String.valueOf(reader.nextDouble());
+                    }
                     addKeystore(name);
                     temp.put(name, value);
                     break;
@@ -138,6 +142,8 @@ public class JsonParserImpl {
                     reader.endArray();
                     if (!root.equals("") && root.contains(".")) {
                         root = root.substring(0, root.lastIndexOf("."));
+                    }else if(!root.equals("")){
+                        root="";
                     }
                     return;
                 case NULL:
