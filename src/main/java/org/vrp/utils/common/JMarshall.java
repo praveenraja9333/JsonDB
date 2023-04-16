@@ -325,8 +325,10 @@ public class JMarshall<T>{
     }
 
     public String getExactFieldKey(String field) {
-        Map<Character, JsonKeys> map = this.jsonParser.getKeyDataStore();
         String fieldName = rks.peek() + field;
+        if(this.jsonParser.getTemp().containsKey(fieldName))
+            return fieldName;
+        Map<Character, JsonKeys> map = this.jsonParser.getKeyDataStore();
         List<String> list = new LinkedList<>();
         JsonKeys jk = map.get(fieldName.charAt(0));
         if (jk==null) return "";
