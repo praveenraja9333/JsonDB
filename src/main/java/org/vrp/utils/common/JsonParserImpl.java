@@ -142,6 +142,8 @@ public class JsonParserImpl {
                     reader.endArray();
                     if (!root.equals("") && root.contains(".")) {
                         root = root.substring(0, root.lastIndexOf("."));
+                    }else if(!root.equals("")){
+                        root="";
                     }
                     return;
                 case NULL:
