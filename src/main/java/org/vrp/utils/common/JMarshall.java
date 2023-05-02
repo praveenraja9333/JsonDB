@@ -89,7 +89,7 @@ public class JMarshall<T>{
             if (list.isEmpty()) return;
             parentString = list.get(0);
             counter = 0;
-            indexIndex = parentString.indexOf(initialField) + initialField.length();
+            //indexIndex = parentString.indexOf(initialField);
         }
         if(isInitialArray){
             rks.clear();
@@ -99,7 +99,8 @@ public class JMarshall<T>{
             return;
         }else {
             final int parentlength = parentString.split("\\.").length;
-            list = new LinkedList<>(list.stream().filter(s -> s.split("\\.").length == parentlength).sorted().collect(Collectors.toList()));
+            Set<String> filter=new HashSet<>();
+            list = new LinkedList<>(list.stream().filter(s -> s.split("\\.").length == parentlength).filter(s->filter.add(s.substring(0,s.indexOf(initialField)))).sorted().collect(Collectors.toList()));
         }
         while (!list.isEmpty()) {
             rks.clear();
@@ -459,7 +460,7 @@ public class JMarshall<T>{
         for (Field field : fields) {
             Class<?> fieldclazz = field.getType();
             Annotation anno;
-            anno = field.getAnnotation(RootElement.class) == null ? null : field.getAnnotation(RootElement.class);
+            anno = field.getAnnotation(RootElement.class);
             if (anno != null) {
                 anno = field.getAnnotation(RjsonArray.class);
                 if (anno != null) {
@@ -491,11 +492,11 @@ public class JMarshall<T>{
         //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotels_response_API.json"));
         //jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\gitsamplebigjson.json"));
         //C:\Users\Praveen\Documents\hotel_api.json
-        jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotel_api.json"));
-        LinkedHashMap<Character, JsonKeys> l = jsonParser.getKeyDataStore();
+       // jsonParser.init(new File("C:\\Users\\Praveen\\Documents\\hotel_api.json"));
+        /*LinkedHashMap<Character, JsonKeys> l = jsonParser.getKeyDataStore();
         JMarshall<Model1Array> jMarshall = new JMarshall();
         jMarshall.setJsonParser(jsonParser);
-        jMarshall.parser(Model1Array.class);
+        jMarshall.parser(Model1Array.class);*/
         /*ArrayList a=jMarshall.arrtemp;
         Map map=jMarshall.getFieldMapping(Model1.class);
         String Key="Hello.Hi.Bye";
